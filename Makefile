@@ -1,5 +1,10 @@
 CXX := c++
-CXXFLAGS := -std=c++20 -O3 -Wall -Wextra -Wpedantic -pthread -Iinclude
+CXXFLAGS := -std=c++23 -O0 -g \
+-Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion \
+-Werror \
+-pthread \
+-fsanitize=thread \
+-Iinclude
 
 BUILD_DIR := build
 TEST_BIN := $(BUILD_DIR)/test_spsc
