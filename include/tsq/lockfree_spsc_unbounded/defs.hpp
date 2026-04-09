@@ -47,8 +47,10 @@ public:
   // Public member functions :
   // Add relevant constructors and destructors -> Add these here only
   lockfree_spsc_unbounded() {
-      head = new node();
-      tail.store(head, std::memory_order_relaxed);
+      node* stub = new node();
+      stub->next.store(nullptr,std::memory_order_relaxed);
+      head = stub;
+      tail.store(stub,std::memory_order_relaxed);
       // memory_order_relaxed is used here since while calling the constructor
       // multiple threads do not access the queue, rather once the queue is constructed
       // then only we need to take care of data race as multiple threads start accessing the queue
