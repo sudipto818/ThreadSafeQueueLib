@@ -9,7 +9,15 @@ enable_testing()
 include(CTest)
 
 find_package(Threads REQUIRED)
-find_package(GTest CONFIG REQUIRED)
+
+include(FetchContent)
+FetchContent_Declare(
+  googletest
+  URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
+)
+# Prevent compiling gtest with MSVC's multithreaded CRT if we use MinGW, etc.
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
 
 include_directories(include)
 
@@ -21,10 +29,10 @@ if(ENABLE_TSAN)
 endif()
 
 # SPSC tests
-add_executable(test_spsc tests/test_spsc.cpp)
+add_executable(test_spsc tests/test_lockfree_spsc_unbounded.cpp)
 target_link_libraries(test_spsc GTest::gtest_main Threads::Threads)
 
-# MPSC tests
+# MPSC tests    
 add_executable(test_mpsc tests/test_mpsc.cpp)
 target_link_libraries(test_mpsc GTest::gtest_main Threads::Threads)
 
