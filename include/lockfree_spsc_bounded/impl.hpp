@@ -118,7 +118,7 @@ size_t lockfree_spsc_bounded<T, Capacity>::size() const {
 template <typename T, size_t Capacity>
 lockfree_spsc_bounded<T, Capacity>::~lockfree_spsc_bounded() {
 	size_t cur_head = head.load(std::memory_order_relaxed);
-	slot_ptr size_t cur_tail = tail.load(std::memory_order_relaxed);
+	size_t cur_tail = tail.load(std::memory_order_relaxed);
 
 	while (cur_head != cur_tail) {
 		std::destroy_at(slot_ptr(cur_head));
