@@ -1,4 +1,5 @@
 /build/
+/.vscode/
 try.cpp
 .git/
-.gitignore
+.gitignoretry\ntry.cpp\n.vscode/\nexamples/\n.DS_Store\n.editorconfig

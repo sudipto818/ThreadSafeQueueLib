@@ -1,13 +1,13 @@
 <div align="center">
 
 # ThreadSafeQueueLib
-**A High-Performance Concurrent Queue Library in Modern C++**
+**Exploring Concurrency and Lock-Free Data Structures in Modern C++**
 
 [![C++23](https://img.shields.io/badge/C++-23-blue.svg)](https://en.wikipedia.org/wiki/C%2B%2B23)
 [![CMake](https://img.shields.io/badge/CMake-Build-success.svg)](https://cmake.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-*Designed and Developed by **[Badri Bishal Das](https://github.com/badri41)** — DSAI Undergrad @ IIT Guwahati | Incoming ASD Intern @ Google*
+*A group learning project by **[Badri Bishal Das](https://github.com/badri41)** and peers at IIT Guwahati*
 
 [📚 Read the Engineering Blog Post](https://www.badribishaldas.in/blog/threadSafeQueue/)
 
@@ -15,54 +15,51 @@
 
 ---
 
-## 📌 Overview
+## 👋 Hello!
 
-**ThreadSafeQueueLib** is a header-only, highly optimized concurrent queue library written in Modern C++ (C++23). It provides a family of thread-safe queues supporting various concurrency models—including **MPMC** (Multi-Producer Multi-Consumer), **MPSC**, and **SPSC** topologies. 
+**ThreadSafeQueueLib** is a group project created to dive deep into C++ and concurrency concepts. Instead of just reading about threads, locks, and atomics, we decided to build a family of thread-safe queues from scratch. 
 
-A standard queue interface becomes fragile under thread contention. Something as ordinary as checking `empty()` before `front()` and `pop()` is prone to data races. ThreadSafeQueueLib solves this by offering both **Lock-Free** and **Blocking (Mutex-based)** implementations tailored for low latency and high throughput under heavy contention.
-
----
-
-## 🚀 Features
-
-- **Comprehensive Concurrency Models**:
-  - **SPSC** (Single-Producer Single-Consumer) - Bounded & Unbounded, Lock-Free
-  - **MPSC** (Multi-Producer Single-Consumer) - Unbounded, Lock-Free
-  - **MPMC** (Multi-Producer Multi-Consumer) - Bounded & Unbounded, Lock-Free & Blocking
-- **Template Metaprogramming**: Extensively uses C++ templates and concepts for compile-time specialization and optimization.
-- **Lock-Free Semantics**: Implements robust non-blocking enqueue/dequeue operations using Compare-And-Swap (CAS) and atomic synchronization.
-- **Hardware-Aware Optimizations**:
-  - **False Sharing Mitigation**: Cache-line alignment (`alignas`) ensures producer and consumer indices do not share cache lines, preventing cache invalidation storms via the MESI protocol.
-  - **Strict Memory Ordering**: Carefully crafted `std::memory_order_acquire`, `release`, and `relaxed` semantics to guarantee correctness without the overhead of full sequential consistency (`seq_cst`).
-- **Benchmarked**: High-resolution `std::chrono` benchmarking against standard `std::mutex` and `std::condition_variable` implementations.
+Our goal wasn't to write the next big production library, but to really understand what makes concurrent programming so challenging and rewarding. A standard `std::queue` isn't safe to use when multiple threads are pushing and popping at the same time. Even a simple `empty()` check followed by a `pop()` can cause a data race. To figure out how to solve this under the hood, we implemented a variety of both blocking (mutex-based) and lock-free queues.
 
 ---
 
-## 🏗️ Design Decisions & Architecture
+## 🛠️ What We Built
 
-### Why Lock-Free?
-Mutex-based queues are easier to write and reason about. However, the lock-free route provides distinct advantages in system-level programming by avoiding thread suspension, context switching, and priority inversion. ThreadSafeQueueLib explores exact progress guarantees, contention handling, and the bleeding edge where performance meets correctness.
+We explored different queue designs depending on how many threads are involved:
+- **SPSC** (Single-Producer Single-Consumer) - Lock-free versions (both bounded and unbounded).
+- **MPSC** (Multi-Producer Single-Consumer) - Unbounded lock-free.
+- **MPMC** (Multi-Producer Multi-Consumer) - Both traditional locking and lock-free implementations.
 
-### Bounded vs. Unbounded
-- **Bounded Queues**: Memory is fixed and predictable, making them extremely fast and cache-friendly, operating mostly over contiguous memory (ring buffers).
-- **Unbounded Queues**: Solves the full-buffer problem dynamically but introduces allocation and reclamation complexities (ABA problem, node stubs, memory lifecycle).
-
-### C++ Memory Model
-Using `std::memory_order_seq_cst` everywhere is safe but severely limits performance. ThreadSafeQueueLib relies heavily on the acquire-release memory model, ensuring that writes in a producer thread mathematically *happen-before* the reads in a consumer thread, with relaxed operations used exclusively where cross-thread synchronization is unnecessary.
+We used C++ templates to write this as a header-only library, allowing the compiler to optimize the queues at build time depending on the types of data being stored.
 
 ---
 
-## 💻 Getting Started
+## 🧠 Things We Learned
 
-### Prerequisites
-- A C++23 compliant compiler (GCC 13+, Clang 16+, MSVC 19.38+)
-- CMake (3.14+)
+Building this taught us a lot of practical system-level concepts that are hard to grasp just from textbooks:
+
+### 1. Why go Lock-Free?
+Writing a concurrent queue with a standard `std::mutex` is relatively straightforward. But writing one *without* locks forced us to learn about Compare-And-Swap (CAS) loops, data races, and progress guarantees. We quickly realized that lock-free programming is incredibly tricky to get right.
+
+### 2. The C++ Memory Model
+Using `std::memory_order_seq_cst` (sequential consistency) everywhere is safe, but it slows everything down. The real challenge was figuring out exactly where we could safely use `acquire-release` and `relaxed` memory ordering to make the queue fast without breaking correctness.
+
+### 3. False Sharing and Cache Lines
+We learned the hard way that if the producer's index and the consumer's index sit next to each other in memory (sharing a cache line), the CPU cores will constantly invalidate each other's caches. We used `alignas` to pad our variables to the hardware cache line size, which gave us a massive performance boost.
+
+### 4. Bounded vs. Unbounded
+Fixed-size (bounded) ring buffers are much easier to manage because the memory is pre-allocated. Unbounded lock-free queues introduced us to the complexities of dynamic memory allocation and safe node reclamation while threads are actively reading them.
+
+---
+
+## 💻 Playing with the Code
+
+If you'd like to try out our code or run the benchmarks, you'll need a C++23 compiler and CMake. 
 
 ### Integration
-ThreadSafeQueueLib is designed to be easily integrated into CMake projects. You can add it using `FetchContent` or by dropping it into your source tree.
+You can easily pull this into your own CMake projects:
 
 ```cmake
-# Using FetchContent
 include(FetchContent)
 FetchContent_Declare(
     tsqlib
@@ -71,55 +68,49 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(tsqlib)
 
-# Link against your executable
 target_link_libraries(your_target PRIVATE ThreadSafeQueueLib)
 ```
 
-### Usage Example
+### A Quick Example
 
 ```cpp
 #include <iostream>
 #include <thread>
-#include <tsfqueue.hpp> // Main unified header
+#include <tsfqueue.hpp> // Main header
 
 int main() {
-    // Instantiate a lock-free Single-Producer Single-Consumer unbounded queue
+    // A queue where one thread pushes and one thread pops
     tsfqueue::lockfree_spsc_unbounded<int> queue;
 
-    // Producer Thread
     std::thread producer([&]() {
         for (int i = 0; i < 1000; ++i) {
             queue.push(i);
         }
     });
 
-    // Consumer Thread
     std::thread consumer([&]() {
         int value;
         for (int i = 0; i < 1000; ++i) {
-            // Spin until an item is successfully popped
+            // Keep trying to pop until we get a value
             while (!queue.try_pop(value)) {
                 std::this_thread::yield(); 
             }
-            // Process value...
         }
     });
 
     producer.join();
     consumer.join();
 
-    std::cout << "All elements processed successfully in a thread-safe manner!\n";
+    std::cout << "All done without data races!\n";
     return 0;
 }
 ```
 
 ---
 
-## 🧪 Testing & Benchmarking
+## 🧪 Building and Testing
 
-The library uses **GoogleTest (gtest)** for rigorous unit testing and includes comprehensive correctness checks for data races (tested using Clang ThreadSanitizer `-fsanitize=thread`).
-
-To build and run the tests:
+We used **GoogleTest** and Clang's **ThreadSanitizer** to make sure our lock-free logic actually works and doesn't contain hidden data races.
 
 ```bash
 mkdir build && cd build
@@ -128,19 +119,14 @@ cmake --build . -j4
 ctest --output-on-failure -j4
 ```
 
-Benchmarks measuring throughput and scalability across varying thread counts can be found in the `benchmarking/` directory.
-
 ---
 
 ## 🤝 Acknowledgements
 
-This project was built under the mentorship and guidance of **Toshit Bhaiya** as part of the **Coding Club, IIT Guwahati**.
+This group project was built under the awesome mentorship and guidance of **Toshit Bhaiya** as part of the **Coding Club, IIT Guwahati**.
 
-- **Author**: Badri Bishal Das
+- **Contributors**: Badri Bishal Das & peers
 - **Blog Write-up**: [That time I got reincarnated as a lock-free queue library implementer](https://www.badribishaldas.in/blog/threadSafeQueue/)
-- **Contact**: badribishaldas3000@gmail.com | [LinkedIn](https://www.linkedin.com/in/badri41/)
-
----
 
 <div align="center">
   <i>"Debugging concurrency is not trivial. It requires stronger OS and architecture knowledge to reason cleanly about what the queue is doing under the hood."</i>
