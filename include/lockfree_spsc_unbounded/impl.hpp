@@ -11,7 +11,7 @@ template <typename T, typename Allocator>
 lockfree_spsc_unbounded<T, Allocator>::lockfree_spsc_unbounded() {
 	node *stub = allocate_node_();
 	head_ = stub;
-	tail_.store(stub, std::memory_order_relaxed);
+	tail_ = stub;
 	// memory_order_relaxed is used here since while calling the constructor
 	// multiple threads do not access the queue, rather once the queue is constructed
 	// then only we need to take care of data race as multiple threads start accessing the queue
@@ -55,10 +55,10 @@ void lockfree_spsc_unbounded<T, Allocator>::swap(
 	swap(alloc_, other.alloc_);
 	swap(head_, other.head_);
 
-	node *this_tail = tail_.load(std::memory_order_relaxed);
-	node *other_tail = other.tail_.load(std::memory_order_relaxed);
-	tail_.store(other_tail, std::memory_order_relaxed);
-	other.tail_.store(this_tail, std::memory_order_relaxed);
+	node *this_tail = tail_;
+	node *other_tail = other.tail_;
+	tail_ = other_tail;
+	other.tail_ = this_tail;
 
 	size_t this_size = size_.load(std::memory_order_relaxed);
 	size_t other_size = other.size_.load(std::memory_order_relaxed);
@@ -86,15 +86,16 @@ void lockfree_spsc_unbounded<T, Allocator>::push(T value) {
 	emplace(std::move(value));
 }
 
+// function(int&& x) -> perfect forwarding 
+
 template <typename T, typename Allocator>
 template <typename... Args>
 void lockfree_spsc_unbounded<T, Allocator>::emplace(Args &&...args) {
 	node *new_stub = allocate_node_();
-	node *current_tail = tail_.load(std::memory_order_relaxed);
 
-	current_tail->data = T(std::forward<Args>(args)...);
-	current_tail->next.store(new_stub, std::memory_order_release);
-	tail_.store(new_stub, std::memory_order_relaxed);
+	tail_->data = T(std::forward<Args>(args)...);
+	tail_->next.store(new_stub, std::memory_order_release);
+	tail_ = new_stub;
 	size_.fetch_add(1, std::memory_order_relaxed);
 }
 // head -> stub <-tail
@@ -123,6 +124,7 @@ void lockfree_spsc_unbounded<T, Allocator>::wait_and_pop(T &value) {
 
 template <typename T, typename Allocator>
 bool lockfree_spsc_unbounded<T, Allocator>::peek(T &value) const { //Not atomic as a whole, so it is not a proper peek operation in general except spsc.
+	static_assert(std::is_copy_assignable_v<T>, "peek() requires T to be copy assignable");
 	node *current_head = head_;
 	node *next = current_head->next.load(std::memory_order_acquire);
 	if (next == nullptr) {

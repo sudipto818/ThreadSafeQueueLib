@@ -58,7 +58,7 @@ template <typename T, typename Allocator = std::allocator<T>> class lockfree_sps
 	// gives the value in reference passed, false otherwise
 	[[nodiscard]] bool empty() const; // : Returns
 	// whether the queue is empty or not at that instant
-	[[nodiscard]] bool peek(T& value) const; // : Returns the front/top element of queue in ref (false if empty queue)
+	[[nodiscard]] bool peek(T& value) const; // : Returns the front/top element of queue in ref (false if empty queue). Fails to compile for move-only types.
 	// 6. Add static asserts
 	// 7. Add emplace_back using perfect forwarding and variadic templates (you
 	// can use this in push then)
@@ -77,10 +77,8 @@ private:
 	alignas(cache_line_size) node* head_{}; //This is a spsc queue so, there is no data race between multiple consumer threads and hence 
 				// head not need be declared atomic.
 	alignas(cache_line_size) 
-	std::atomic<node*> tail_{}; //tail is required to be atomic as producer changes the tail while pushing
-							// and consumer may try to read the tail while checking if the queue is empty.
-							// If tail was not atomic this might lead to data race, that is while a consumer tries
-							// to read it; the tail might get updated by the producer but the consumer gets the old value.
+	node* tail_{}; // tail does not need to be atomic because it is only accessed and modified by the producer thread.
+							// Cross-thread synchronization is handled by the atomic next pointers in the nodes themselves.
 
 
 	// Description of private members :
@@ -88,7 +86,6 @@ private:
 	// 2. node* tail -> Pointer to tail node
 	// 3. Cache align 1-2
 	alignas(cache_line_size) std::atomic<size_t> size_{0};
-
 };
 } // namespace tsfqueue::impl
 

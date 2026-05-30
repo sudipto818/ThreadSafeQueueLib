@@ -14,9 +14,10 @@ void lockfree_spsc_bounded<T, Capacity>::wait_and_push(T value) {
 	// exclusive write access to the tail variable and a single thread always agrees upon the order of modification of an atomic variable.
 	//tail.load(relaxed) is less costly.
 	size_t next_tail = (cur_tail + 1) % capacity;
-	// size_t curr_head = head.load(std::memory_order_acquire);
+
+	// Spin and Wait for a free slot to push... 
 	while (next_tail == head_cache) {
-		head_cache = head.load(std::memory_order_acquire); // busy wait
+		head_cache = head.load(std::memory_order_acquire); 
 	}
 
 	std::construct_at(slot_ptr(cur_tail), std::move(value));
@@ -91,7 +92,7 @@ bool lockfree_spsc_bounded<T, Capacity>::emplace_back(Args &&...args) {
 	if (next_tail == head_cache) {
 		head_cache = head.load(std::memory_order_acquire);
 		if (next_tail == head_cache) {
-		return false;
+			return false;
 		}
 	}
 	std::construct_at(slot_ptr(cur_tail), std::forward<Args>(args)...);
