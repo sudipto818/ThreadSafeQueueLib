@@ -120,6 +120,23 @@ ctest --output-on-failure -j4
 ```
 
 ---
+## 📊 Benchmarking
+
+To measure the raw throughput (operations per second) of the different queue architectures, we included a standalone, dependency-free benchmarking tool. It evaluates how each queue scales under different levels of thread contention by varying producers and consumers from 1 up to 16 threads.
+
+To run the benchmarks with maximum performance, compile the source using the -O3 optimization flag and the C++23 standard:
+
+```bash
+# Compile the benchmark
+g++ -O3 -std=c++23 -pthread -I./include benchmarking/bench_throughput.cpp -o bench_throughput.exe
+
+# Run the executable
+.\bench_throughput.exe  //In powershell
+```
+
+The commands will print live throughput results to the terminal and save a formatted table to benchmark_results.txt in the current directory.
+
+---
 
 ## 🤝 Acknowledgements
 
