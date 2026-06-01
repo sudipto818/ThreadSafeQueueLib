@@ -1,7 +1,7 @@
 #ifndef LOCKFREE_MPSC_UNBOUNDED_IMPL
 #define LOCKFREE_MPSC_UNBOUNDED_IMPL
 
-#include<defs.hpp>
+#include "defs.hpp"
 #include<thread>
 #include<utility>
 
@@ -47,7 +47,7 @@ namespace tsfqueue::impl {
     }
 
     template<typename T, typename Allocator>
-    lockfree_mpsc_unbounded<T,Allocator>::swap(
+    void lockfree_mpsc_unbounded<T,Allocator>::swap(
         lockfree_mpsc_unbounded &other) noexcept {
             using std::swap;
             swap(alloc,other.alloc);
@@ -56,6 +56,11 @@ namespace tsfqueue::impl {
             node* other_tail=other.tail.load(std::memory_order_relaxed);
             tail.store(other_tail,std::memory_order_relaxed);
             other.tail.store(this_tail,std::memory_order_relaxed);
+
+			size_t this_size = size.load(std::memory_order_relaxed);
+			size_t other_size = other.size.load(std::memory_order_relaxed);
+			size.store(other_size, std::memory_order_relaxed);
+			other.size.store(this_size, std::memory_order_relaxed);
         }
     
     template <typename T, typename Allocator>
@@ -68,7 +73,7 @@ namespace tsfqueue::impl {
    }
 
    template <typename T, typename Allocator>
-   void lockfree_mpsc_unbounded<T, Allocator>::deallocate_node_(node *p) noexcept {
+   void lockfree_mpsc_unbounded<T, Allocator>::deallocate_node(node *p) noexcept {
 	node_alloc_traits::destroy(alloc, p);
 	node_alloc_traits::deallocate(alloc, p, 1);
   }
@@ -95,7 +100,7 @@ namespace tsfqueue::impl {
     if(nxt==nullptr) return false;
     value = std::move(old_head->data);
     head=nxt;
-    deallocate(old_head);
+    deallocate_node(old_head);
     size.fetch_add(1, std::memory_order_relaxed);
     return true;
   }
