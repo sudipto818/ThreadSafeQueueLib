@@ -28,9 +28,13 @@ if(ENABLE_TSAN)
 	add_link_options(-fsanitize=thread)
 endif()
 
-# SPSC tests
+# SPSC tests (unbounded)
 add_executable(test_spsc tests/test_lockfree_spsc_unbounded.cpp)
 target_link_libraries(test_spsc GTest::gtest_main Threads::Threads)
+
+# SPSC tests (bounded)
+add_executable(test_spsc_bounded tests/test_lockfree_spsc_bounded.cpp)
+target_link_libraries(test_spsc_bounded GTest::gtest_main Threads::Threads)
 
 # MPSC tests    
 add_executable(test_mpsc tests/test_mpsc.cpp)
@@ -42,5 +46,6 @@ target_link_libraries(test_mpmc GTest::gtest_main Threads::Threads)
 
 # Register tests
 add_test(NAME SPSC COMMAND test_spsc)
+add_test(NAME SPSC_BOUNDED COMMAND test_spsc_bounded)
 add_test(NAME MPSC COMMAND test_mpsc)
 add_test(NAME MPMC COMMAND test_mpmc)
