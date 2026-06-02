@@ -122,6 +122,7 @@ ctest --output-on-failure -j4
 ---
 ## 📊 Benchmarking
 
+**bench_throughput.cpp**
 To measure the raw throughput (operations per second) of the different queue architectures, we included a standalone, dependency-free benchmarking tool. It evaluates how each queue scales under different levels of thread contention by varying producers and consumers from 1 up to 16 threads.
 
 To run the benchmarks with maximum performance, compile the source using the -O3 optimization flag and the C++23 standard:
@@ -134,7 +135,22 @@ g++ -O3 -std=c++23 -pthread -I./include benchmarking/bench_throughput.cpp -o ben
 .\bench_throughput.exe  //In powershell
 ```
 
-The commands will print live throughput results to the terminal and save a formatted table to benchmark_results.txt in the current directory.
+**bench_latency.cpp**
+While throughput measures *how many* items are processed, latency measures *how fast* a single item travels from a producer to a consumer. To measure this, our benchmark pushes ultra-precise nanosecond timestamps through the queues and calculates the transit time.
+
+Because averages can be heavily skewed by OS-level background noise or thread context-switching, the benchmark sorts millions of operations to provide industry-standard **Percentile Metrics** (measured in microseconds, $\mu s$):
+* **p50 (Median):** The typical, everyday performance of the queue.
+* **p99 & p99.9 (Tail Latency):** The absolute worst-case scenarios. In blocking queues, this number spikes massively due to "Lock Convoys" (the OS pausing threads to wait for a `std::mutex`). In lock-free queues, this number stays incredibly low.
+
+```bash
+# Compile the benchmark
+g++ -O3 -std=c++23 -pthread -I./include benchmarking/bench_latency.cpp -o bench_latency.exe
+
+# Run the executable
+.\bench_latency.exe  //In powershell
+```
+
+*The commands will print live throughput results to the terminal and save a formatted table to benchmark_results.txt and latency_results.txt in the current directory.*
 
 ---
 
