@@ -10,7 +10,7 @@ using namespace tsfqueue::impl;
 
 class SPSCTest : public ::testing::Test {
 protected:
-	lockfree_spsc_unbounded<int> q;
+	lockfree_spsc_unbounded<int, std::allocator<int>, true> q;
 	
 	
 	void SetUp() override {
