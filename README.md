@@ -7,7 +7,7 @@
 [![CMake](https://img.shields.io/badge/CMake-Build-success.svg)](https://cmake.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-*A group learning project by **[Badri Bishal Das](https://github.com/badri41)** , **[Sujal Patnaik](https://github.com/Sujal-Patnaik)** , **[Sudipto Ghosh](https://github.com/sudipto818)** , **[Biswabhusan Samal](https://github.com/biswa2006)**and peers at IIT Guwahati*
+*A group learning project by **[Badri Bishal Das](https://github.com/badri41)** , **[Sujal Patnaik](https://github.com/Sujal-Patnaik)** , **[Sudipto Ghosh](https://github.com/sudipto818)** , **[Biswabhusan Samal](https://github.com/biswa2006)** and peers at IIT Guwahati*
 
 [📚 Read the Engineering Blog Post](https://www.badribishaldas.in/blog/threadSafeQueue/)
 
@@ -158,7 +158,7 @@ g++ -O3 -std=c++23 -pthread -I./include benchmarking/bench_latency.cpp -o bench_
 
 This group project was built under the awesome mentorship and guidance of **Toshit Bhaiya** as part of the **Coding Club, IIT Guwahati**.
 
-- **Contributors**: Badri Bishal Das, Sujal Patnaik, Sudipto Ghosh & peers
+- **Contributors**: Badri Bishal Das, Sujal Patnaik, Sudipto Ghosh & Biswabhusan Samal
 - **Blog Write-up**: [That time I got reincarnated as a lock-free queue library implementer](https://www.badribishaldas.in/blog/threadSafeQueue/)
 
 <div align="center">
