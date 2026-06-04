@@ -9,20 +9,20 @@
 #include <utility>
 
 namespace tsfqueue::impl {
-template <typename T, typename Allocator = std::allocator<T>> class lockfree_mpsc_unbounded {
-	static_assert(std::is_object_v<T>, "T must be an object type");
-	static_assert(!std::is_reference_v<T>, "Queue cannot store reference types");
-	static_assert(std::is_default_constructible_v<T>, "T must be default constructible");
-	static_assert(std::is_move_constructible_v<T> || std::is_copy_constructible_v<T>,
-				  "T must be move or copy constructible");
-	static_assert(std::is_move_assignable_v<T> || std::is_copy_assignable_v<T>,
-				  "T must be move or copy assignable");
-	static_assert(std::is_nothrow_destructible_v<T>, "T must be nothrow destructible");
+template <typename T, typename Allocator = std::allocator<T>, bool TrackMetrics = false> class lockfree_mpsc_unbounded {
+  static_assert(std::is_object_v<T>, "T must be an object type");
+  static_assert(!std::is_reference_v<T>, "Queue cannot store reference types");
+  static_assert(std::is_default_constructible_v<T>, "T must be default constructible");
+  static_assert(std::is_move_constructible_v<T> || std::is_copy_constructible_v<T>,
+          "T must be move or copy constructible");
+  static_assert(std::is_move_assignable_v<T> || std::is_copy_assignable_v<T>,
+          "T must be move or copy assignable");
+  static_assert(std::is_nothrow_destructible_v<T>, "T must be nothrow destructible");
 
-	using node = tsfqueue::utils::Lockless_Node<T>;
+  using node = tsfqueue::utils::Lockless_Node<T>;
 
-	using node_allocator = typename std::allocator_traits<Allocator>::template rebind_alloc<node>;
-	using node_alloc_traits = std::allocator_traits<node_allocator>;
+  using node_allocator = typename std::allocator_traits<Allocator>::template rebind_alloc<node>;
+  using node_alloc_traits = std::allocator_traits<node_allocator>;
 
     public:
       lockfree_mpsc_unbounded();
@@ -48,7 +48,8 @@ template <typename T, typename Allocator = std::allocator<T>> class lockfree_mps
 
       [[nodiscard]] bool empty() const;
       [[nodiscard]] bool peek(T& value) const;
-      [[nodiscard]] size_t size() const noexcept;
+      [[nodiscard]] size_t get_size() const noexcept;
+      [[nodiscard]] size_t max_size() const noexcept;
 
     private:
       node* allocate_node();
@@ -56,10 +57,10 @@ template <typename T, typename Allocator = std::allocator<T>> class lockfree_mps
 
       node_allocator alloc{};
 
-      alignas(cache_line_size) node* head{};  //This is a mpsc queue so, there is no data race between multiple consumer threads and hence 
-											// head not need be declared atomic.
-      alignas(cache_line_size) std::atomic<node*> tail{};   // tail needs to be atomic because it is accessed and modified by multiple producer threads.
-      alignas(cache_line_size) std::atomic<size_t> size_{0};
+      alignas(cache_line_size) node* head{};
+      alignas(cache_line_size) std::atomic<node*> tail{};
+      alignas(cache_line_size) std::atomic<size_t> size{0};
+      alignas(cache_line_size) std::atomic<size_t> max_size_val{0};
     };
 }
 

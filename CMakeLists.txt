@@ -49,3 +49,10 @@ add_test(NAME SPSC COMMAND test_spsc)
 add_test(NAME SPSC_BOUNDED COMMAND test_spsc_bounded)
 add_test(NAME MPSC COMMAND test_mpsc)
 add_test(NAME MPMC COMMAND test_mpmc)
+
+# MPSC isolated benchmarks
+add_executable(bench_lat_mpsc benchmarking/bench_latency_mpsc.cpp)
+target_link_libraries(bench_lat_mpsc Threads::Threads)
+
+add_executable(bench_thr_mpsc benchmarking/bench_throughput_mpsc.cpp)
+target_link_libraries(bench_thr_mpsc Threads::Threads)

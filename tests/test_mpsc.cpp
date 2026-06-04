@@ -13,7 +13,7 @@ using namespace tsfqueue::impl;
 
 class MPSCTest : public ::testing::Test {
 protected:
-	lockfree_mpsc_unbounded<int> q;
+	lockfree_mpsc_unbounded<int, std::allocator<int>, true> q;
 	
 	void SetUp() override {
 	 
@@ -27,13 +27,13 @@ protected:
 
 TEST_F(MPSCTest, Is_Empty_Initially) {
 	EXPECT_TRUE(q.empty());
-	EXPECT_EQ(q.size(), 0);
+	EXPECT_EQ(q.get_size(), 0u);
 }
 
 TEST_F(MPSCTest, Push_Pop_Works) {
 	q.push(100);
 	EXPECT_FALSE(q.empty());
-	EXPECT_EQ(q.size(), 1);
+	EXPECT_EQ(q.get_size(), 1u);
 	
 	int result = 0;
 	EXPECT_TRUE(q.try_pop(result));
@@ -42,9 +42,9 @@ TEST_F(MPSCTest, Push_Pop_Works) {
 }
 
 TEST_F(MPSCTest, Emplace_Works) {
-	lockfree_mpsc_unbounded<std::string> str_q;
+	lockfree_mpsc_unbounded<std::string, std::allocator<std::string>, true> str_q;
 	str_q.emplace(5, 'A'); // Constructs "AAAAA" in place
-	EXPECT_EQ(str_q.size(), 1);
+	EXPECT_EQ(str_q.get_size(), 1u);
 	
 	std::string res;
 	EXPECT_TRUE(str_q.try_pop(res));
@@ -68,18 +68,18 @@ TEST_F(MPSCTest, Peek_Works_Without_Removing) {
 	int peek_val = 0;
 	EXPECT_TRUE(q.peek(peek_val));
 	EXPECT_EQ(peek_val, 42);
-	EXPECT_EQ(q.size(), 1);
+	EXPECT_EQ(q.get_size(), 1u);
 }
 
 TEST_F(MPSCTest, Move_Constructor_Works) {
 	q.push(10);
 	q.push(20);
 
-	lockfree_mpsc_unbounded<int> moved_q(std::move(q));
+	lockfree_mpsc_unbounded<int, std::allocator<int>, true> moved_q(std::move(q));
 
 	// Original should be empty after move
 	EXPECT_TRUE(q.empty());
-	EXPECT_EQ(moved_q.size(), 2);
+	EXPECT_EQ(moved_q.get_size(), 2u);
 
 	int val;
 	EXPECT_TRUE(moved_q.try_pop(val)); EXPECT_EQ(val, 10);
