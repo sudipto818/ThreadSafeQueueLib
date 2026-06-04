@@ -136,16 +136,19 @@ g++ -O3 -std=c++23 -pthread -I./include benchmarking/benchLatency.cpp -o benchLa
 
 Here are the benchmarking results generated on our test system.
 
-#### 1. spsc Unbounded (Single-Producer Single-Consumer)
-Because there is no contention between multiple producers or multiple consumers, spsc achieves incredibly high throughput and very low latency.
+#### 1. spsc (Single-Producer Single-Consumer)
+Because there is no contention between multiple producers or multiple consumers, SPSC architectures achieve incredibly high throughput. However, to truly prove the value of lock-free programming, we benchmarked our lock-free implementations against a traditional `std::mutex` + `std::queue`.
 
 <div align="center">
-  <img src="https://quickchart.io/chart?c=%7B%22type%22%3A%22bar%22%2C%22data%22%3A%7B%22labels%22%3A%5B%224%20Bytes%22%2C%2264%20Bytes%22%2C%22256%20Bytes%22%2C%221024%20Bytes%22%5D%2C%22datasets%22%3A%5B%7B%22label%22%3A%22Throughput%20(Millions%20Ops%2Fsec)%22%2C%22data%22%3A%5B10.7%2C9.03%2C5.23%2C5.03%5D%2C%22backgroundColor%22%3A%22rgba(75%2C%20192%2C%20192%2C%200.8)%22%7D%5D%7D%2C%22options%22%3A%7B%22title%22%3A%7B%22display%22%3Atrue%2C%22text%22%3A%22SPSC%20Throughput%20vs%20Payload%20Size%22%7D%2C%22scales%22%3A%7B%22yAxes%22%3A%5B%7B%22ticks%22%3A%7B%22beginAtZero%22%3Atrue%7D%7D%5D%7D%7D%7D" alt="SPSC Throughput vs Payload" width="45%" />
+  <img src="https://quickchart.io/chart?c=%7B%22type%22%3A%22bar%22%2C%22data%22%3A%7B%22labels%22%3A%5B%22Unbounded%20Lock-Free%22%2C%22Bounded%20Lock-Free%22%2C%22Mutex%20Baseline%22%5D%2C%22datasets%22%3A%5B%7B%22label%22%3A%22Throughput%20-%201KB%20Payload%20(Millions%20Ops%2Fsec)%22%2C%22data%22%3A%5B5.8%2C11.2%2C6.8%5D%2C%22backgroundColor%22%3A%22rgba(75%2C%20192%2C%20192%2C%200.8)%22%7D%5D%7D%2C%22options%22%3A%7B%22title%22%3A%7B%22display%22%3Atrue%2C%22text%22%3A%22SPSC%20Throughput%20Comparison%20(1KB%20Payload)%22%7D%2C%22scales%22%3A%7B%22yAxes%22%3A%5B%7B%22ticks%22%3A%7B%22beginAtZero%22%3Atrue%7D%7D%5D%7D%7D%7D" alt="SPSC Throughput vs Mutex" width="45%" />
   <img src="https://quickchart.io/chart?c=%7B%22type%22%3A%22bar%22%2C%22data%22%3A%7B%22labels%22%3A%5B%22p50%20(Median)%22%2C%22p99%22%2C%22p99.9%20(Worst%20Case)%22%5D%2C%22datasets%22%3A%5B%7B%22label%22%3A%22Transit%20Latency%20(%CE%BCs)%22%2C%22data%22%3A%5B0.7%2C99.2%2C196.4%5D%2C%22backgroundColor%22%3A%22rgba(153%2C%20102%2C%20255%2C%200.8)%22%7D%5D%7D%2C%22options%22%3A%7B%22title%22%3A%7B%22display%22%3Atrue%2C%22text%22%3A%22SPSC%20Transit%20Latency%20Distribution%22%7D%2C%22scales%22%3A%7B%22yAxes%22%3A%5B%7B%22ticks%22%3A%7B%22beginAtZero%22%3Atrue%7D%7D%5D%7D%7D%7D" alt="SPSC Latency Distribution Chart" width="45%" />
 </div>
 
-- **Throughput:** Drops from `~10.7e+06 Ops/sec` (4 bytes) to `~5.0e+06 Ops/sec` (1024 bytes) due to OS dynamic memory allocation overhead.
-- **Latency (Transit Time):** Extremely tight distribution. Average: `~6 us` | p50: `0.7 us` | p99: `99 us`.
+**The Lock-Free Advantage (Payload Scalability):**
+- For very small payloads (4 Bytes), a traditional `std::mutex` queue performs extremely well (up to 20M Ops/sec) due to modern OS futex optimizations and `std::deque` block allocation.
+- However, as payload size increases to **1KB**, the critical section inside the mutex grows, causing the producer and consumer to lock each other out during data copies.
+- In contrast, our **Bounded Lock-Free SPSC** queue shines under heavy payloads, sustaining **~11.2M Ops/sec**. By eliminating locks, the producer and consumer can copy massive 1KB payloads into the ring buffer completely independently, resulting in nearly a **2x performance increase** over the mutex baseline (6.8M Ops/sec). 
+- *(Note: The Unbounded Lock-Free queue drops to ~5.8M Ops/sec at 1KB payloads due to the overhead of the OS dynamically allocating `new`/`delete` nodes).*
 
 #### 2. mpsc Unbounded (Multi-Producer Single-Consumer)
 As the number of concurrent producers increases, contention on the queue's tail pointer increases, leading to more CAS (Compare-And-Swap) retries. This naturally decreases overall throughput and increases tail latency.

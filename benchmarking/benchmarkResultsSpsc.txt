@@ -1,0 +1,10 @@
+--- SPSC THROUGHPUT COMPARISON (TOTAL_OPS = 5000000) ---
+
+SPSC_LockFree_Unbounded (4B)       | P=1, C=1 | Time: 0.3932   s | Throughput: 1.27e+07 Ops/sec
+SPSC_LockFree_Bounded (4B)         | P=1, C=1 | Time: 0.4207   s | Throughput: 1.19e+07 Ops/sec
+SPSC_Mutex (4B)                    | P=1, C=1 | Time: 0.2403   s | Throughput: 2.08e+07 Ops/sec
+
+SPSC_LockFree_Unbounded (1KB)      | P=1, C=1 | Time: 0.8545   s | Throughput: 5.85e+06 Ops/sec
+SPSC_LockFree_Bounded (1KB)        | P=1, C=1 | Time: 0.4473   s | Throughput: 1.12e+07 Ops/sec
+SPSC_Mutex (1KB)                   | P=1, C=1 | Time: 0.7305   s | Throughput: 6.84e+06 Ops/sec
+-------------------------------------------------------------------
