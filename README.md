@@ -9,7 +9,7 @@
 
 *A group learning project by **[Badri Bishal Das](https://github.com/badri41)** , **[Sujal Patnaik](https://github.com/Sujal-Patnaik)** , **[Sudipto Ghosh](https://github.com/sudipto818)** , **[Biswabhusan Samal](https://github.com/biswa2006)** at IIT Guwahati*
 
-[📚 Read the Engineering Blog Post](https://www.badribishaldas.in/blog/threadSafeQueue/)
+[Read Blog Here](https://www.badribishaldas.in/blog/threadSafeQueue/)
 
 </div>
 
@@ -19,11 +19,11 @@
 
 **ThreadSafeQueueLib** is a group project created to dive deep into C++ and concurrency concepts. Instead of just reading about threads, locks, and atomics, we decided to build a family of thread-safe queues from scratch. 
 
-Our goal wasn't to write the next big production library, but to really understand what makes concurrent programming so challenging and rewarding. A standard `std::queue` isn't safe to use when multiple threads are pushing and popping at the same time. Even a simple `empty()` check followed by a `pop()` can cause a data race. To figure out how to solve this, we implemented a variety of both blocking (mutex-based) and lock-free queues.
+Our goal wasn't to write the next big production library, but to really understand what makes concurrent programming so challenging and rewarding. A standard `std::queue` isn't safe to use when multiple threads are pushing and popping at the same time. To solve this, we implemented both blocking (mutex-based) and lock-free queues.
 
 ---
 
-## 🛠️ What We Built
+## What We Built
 
 We explored different queue designs depending on how many threads are involved:
 - **spsc** (Single-Producer Single-Consumer) - Lock-free versions (both bounded and unbounded).
@@ -32,28 +32,12 @@ We explored different queue designs depending on how many threads are involved:
 
 We used C++ templates to write this as a header-only library, allowing the compiler to optimize the queues at build time depending on the types of data being stored.
 
----
+## How to use this? 
 
-## Things We Learned
-
-Building this taught us a lot of practical system-level concepts that are hard to grasp just from textbooks:
-
-### 1. Why go Lock-Free?
-Writing a concurrent queue with a standard `std::mutex` is relatively straightforward. But writing one *without* locks forced us to learn about Compare-And-Swap (CAS) loops, data races, and progress guarantees. We quickly realized that lock-free programming is incredibly tricky to get right.
-
-### 2. The C++ Memory Model
-Using `std::memory_order_seq_cst` (sequential consistency) everywhere is safe, but it slows everything down. The real challenge was figuring out exactly where we could safely use `acquire-release` and `relaxed` memory ordering to make the queue fast without breaking correctness.
-
-### 3. False Sharing and Cache Lines
-We learned the hard way that if the producer's index and the consumer's index sit next to each other in memory (sharing a cache line), the CPU cores will constantly invalidate each other's caches. We used `alignas` to pad our variables to the hardware cache line size, which gave us a massive performance boost.
----
-
-## Playing with the Code
-
-If you'd like to try out our code or run the benchmarks, you'll need a C++23 compiler and CMake. 
+prerequisites : C++23, CMake
 
 ### Integration
-You can easily pull this into your own CMake projects:
+You can easily pull this into your own CMake projects, or clone the Git repo directly:
 
 ```cmake
 include(FetchContent)
@@ -188,9 +172,9 @@ As the number of concurrent producers increases, contention on the queue's tail 
 
 ---
 
-## 🤝 Acknowledgements
+## Acknowledgements
 
-This group project was built under the awesome mentorship and guidance of **Toshit Bhaiya** as part of the **Coding Club, IIT Guwahati**.
+This group project was built under the awesome mentorship and guidance of **Toshit Jain Bhaiya** as part of the **Coding Club, IIT Guwahati**.
 
 - **Contributors**: Badri Bishal Das, Sujal Patnaik, Sudipto Ghosh & Biswabhusan Samal
 - **Blog Write-up**: [Read Here](https://www.badribishaldas.in/blog/threadSafeQueue/)
